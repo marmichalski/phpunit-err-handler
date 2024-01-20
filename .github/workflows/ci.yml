@@ -1,0 +1,43 @@
+name: "CI"
+
+concurrency:
+  group: "ci-${{ github.head_ref || github.run_id }}"
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - "master"
+
+jobs:
+  ci:
+    name: "Tests with phpunit v${{ matrix.phpunit }}"
+    runs-on: "ubuntu-latest"
+
+    strategy:
+      fail-fast: false
+      matrix:
+        phpunit:
+          - "10.5.3"
+          - "10.5.4"
+          - "10.5.8"
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Install PHP"
+        uses: "shivammathur/setup-php@v2"
+        with:
+          coverage: "pcov"
+          php-version: "8.2"
+          ini-values: memory_limit=-1
+
+      - name: "Install composer dependencies"
+        uses: "ramsey/composer-install@v2"
+
+      - name: "Set phpunit version"
+        run: "composer update phpunit/phpunit:${{ matrix.phpunit }}"
+
+      - name: "Run phpunit"
+        run: "./vendor/bin/phpunit tests/"
